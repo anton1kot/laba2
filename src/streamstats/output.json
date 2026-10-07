@@ -1,0 +1,24 @@
+{
+  "total_events": 5,
+  "by_level": {
+    "INFO": 1,
+    "DEBUG": 1,
+    "WARNING": 1,
+    "ERROR": 1,
+    "CRITICAL": 1
+  },
+  "by_source": {
+    "auth": 1,
+    "cache": 1,
+    "db": 1,
+    "api": 1,
+    "billing": 1
+  },
+  "top_5_error_sources": {
+    "billing": 1,
+    "api": 1
+  },
+  "first_timestamp": 2020,
+  "last_timestamp": 2024,
+  "skipped_lines": 0
+}
