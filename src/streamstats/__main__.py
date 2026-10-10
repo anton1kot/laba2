@@ -15,8 +15,13 @@ CLI:
 
 
 '''
+import json
 import sys
+from logging import raiseExceptions
+
+from streamstats.errors import StreamStatsError, EventError, TimeStampError, FormatError
 from .report import json_write
+from .parsers import file_pars
 
 class Arguments:
     def __init__(self,argvs):
@@ -50,8 +55,21 @@ def main():
             if args.condition == 'output':
                 args.output_file = argue
                 args.condition = None
-
-    json_write(args.format,args.files)
+    try:
+        stata = file_pars(args.format, args.files, args.skip_invalid_flag)
+    except EventError as er:
+        sys.stderr.write(f'EventError: {er}')
+        sys.exit(2)
+#    except TimeStampError as er:
+        sys.stderr.write(f'TimeStampError: {er}')
+        sys.exit(2)
+    except FormatError as er:
+        sys.stderr.write(f'FormatError: {er}')
+        sys.exit(2)
+    if args.output_file:
+        json_write(stata)
+    else:
+        sys.stdout.write(json.dumps(stata, ensure_ascii=False, indent=2).replace('{','').replace('}',' ').replace(',',' ').replace('"',''))
 
 
 if __name__ == "__main__":

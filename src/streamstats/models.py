@@ -1,3 +1,8 @@
+from operator import and_
+
+from streamstats.errors import EventError
+
+
 class Event:
 
     def __init__(self, file_number, line_number, timestamp, level, source, message=None):
@@ -8,6 +13,11 @@ class Event:
         self.file_number = file_number
         self.line_number = line_number
 
+def valid_keys(file):
+    if len(file) != 4: return False
+    return file == ['timestamp', 'level', 'source', 'message']
+
+
 def jsonl_event(file_number, line_number,file):
     #valid_keys(file)
     return Event(file_number,
@@ -17,9 +27,10 @@ def jsonl_event(file_number, line_number,file):
                  file['source'],
                  file['message'] if 'message' in file else None)
 def csv_event(file_number, line_number,file):
-    if line_number == 0:
+    if line_number == 1:
+        if not valid_keys(file):
+            raise KeyError()
         return None
-        #valid_keys(file)
     return Event(file_number,
                  line_number,
                  file[0],
