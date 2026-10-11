@@ -33,7 +33,7 @@ class Stats:
 
 
     def analys(self,event=None):
-        if event == None:
+        if event is None:
             return 0
         try:
             if self.first_point: # Если есть с чем сравнить

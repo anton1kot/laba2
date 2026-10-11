@@ -1,9 +1,17 @@
 import json
 import sys
 
-from streamstats.errors import EventError, TimeStampError, FormatError, EmptyFileError, CLIConfigError
-from .report import json_write
+from streamstats.errors import (
+    CLIConfigError,
+    EmptyFileError,
+    EventError,
+    FormatError,
+    TimeStampError,
+)
+
 from .parsers import file_pars
+from .report import json_write
+
 
 class Arguments:
     def __init__(self,argvs):
@@ -59,7 +67,7 @@ def main():
         if not args.files:
             raise EmptyFileError('Please, input: "... analyze <file_name> --format ..."')
         if args.format is None:
-            raise FormatError(f'Please indicate format: "... --format csv|jsonl"')
+            raise FormatError('Please indicate format: "... --format csv|jsonl"')
         if args.output_file:
             json_write(stata, args.output_file)
         else:

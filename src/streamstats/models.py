@@ -1,4 +1,4 @@
-from streamstats.errors import EventError, EmptySourceError
+from streamstats.errors import EmptySourceError
 
 
 class Event:
@@ -25,7 +25,7 @@ def jsonl_event(file_number, line_number,file):
                  file['timestamp'],
                  file['level'],
                  file['source'],
-                 file['message'] if 'message' in file else None)
+                 file.get('message', None))
 def csv_event(file_number, line_number,file):
     if line_number == 1:
         if not valid_keys(file):

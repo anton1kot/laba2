@@ -1,5 +1,5 @@
-from .parsers import file_pars
 import json
+
 
 def json_write(stata, file):
     with open(file, "w", encoding="utf-8") as f:

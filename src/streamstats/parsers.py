@@ -1,15 +1,16 @@
-import json
 import csv
+import json
 import sys
+from json import JSONDecodeError
 
-from .models import jsonl_event, csv_event
 from .analysis import Stats
 from .errors import *
+from .models import csv_event, jsonl_event
+
 
 def file_pars(file_format,files_name, skip_invalid_flag):
-    file_number = 0
     stata = Stats()
-    for file_name in files_name:
+    for file_number, file_name in enumerate(files_name):
         file_number+=1 # Считаем, номер файла, если вдруг он повреждён
         stata = events(stata, file_format, file_name, file_number, skip_invalid_flag)
 
@@ -21,9 +22,9 @@ def events(stata, file_format,file_name, file_number, skip_invalid_flag):
     try:
         if file_format == 'jsonl':
             with open(file_name, 'r', encoding='utf-8') as jsonl_file:
-                for line in jsonl_file:
+                for line_number, line in enumerate(jsonl_file) :
                     if line == '\n': continue
-                    line_number += 1
+
                     try:
                         stata.analys(jsonl_event(file_number, line_number,json.loads(line.strip())))
                     except TimeStampError as er:
@@ -32,7 +33,19 @@ def events(stata, file_format,file_name, file_number, skip_invalid_flag):
                             sys.stderr.write(f'WARNING: line #{line_number}, file #{file_number}\n')
                         else:
                             raise TimeStampError(f'{er} in file {file_number} line {line_number} field "timestamp"')
-                    except Exception as er:
+                    except KeyError as er:
+                        if skip_invalid_flag:
+                            stata.skipped_lines += 1
+                            sys.stderr.write(f'WARNING: line #{line_number}, file #{file_number}\n')
+                        else:
+                            raise EventError(f'"{type(er).__name__}" in file {file_number}, line {line_number}')
+                    except StreamStatsError as er:
+                        if skip_invalid_flag:
+                            stata.skipped_lines += 1
+                            sys.stderr.write(f'WARNING: line #{line_number}, file #{file_number}\n')
+                        else:
+                            raise EventError(f'"{type(er).__name__}" in file {file_number}, line {line_number}')
+                    except JSONDecodeError as er:
                         if skip_invalid_flag:
                             stata.skipped_lines += 1
                             sys.stderr.write(f'WARNING: line #{line_number}, file #{file_number}\n')
@@ -54,12 +67,19 @@ def events(stata, file_format,file_name, file_number, skip_invalid_flag):
                             sys.stderr.write(f'WARNING: line #{line_number}, file #{file_number}\n')
                         else:
                             raise TimeStampError(f'{er} in file {file_number} line {line_number} field "timestamp"')
-                    except Exception as er:
+                    except KeyError as er:
                         if skip_invalid_flag:
                             stata.skipped_lines += 1
                             sys.stderr.write(f'WARNING: line #{line_number}, file #{file_number}\n')
                         else:
                             raise EventError(f'"{type(er).__name__}" in file {file_number}, line {line_number}')
+                    except StreamStatsError as er:
+                        if skip_invalid_flag:
+                            stata.skipped_lines += 1
+                            sys.stderr.write(f'WARNING: line #{line_number}, file #{file_number}\n')
+                        else:
+                            raise EventError(f'"{type(er).__name__}" in file {file_number}, line {line_number}')
+
         else: raise FormatError(f'<{file_format}> is unsupported format, only <csv> or <jsonl>')
     except FileNotFoundError as er:
         raise CLIConfigError(f'{type(er).__name__} in file {file_number}')
