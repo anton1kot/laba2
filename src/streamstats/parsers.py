@@ -11,7 +11,6 @@ from .models import csv_event, jsonl_event
 def file_pars(file_format,files_name, skip_invalid_flag):
     stata = Stats()
     for file_number, file_name in enumerate(files_name):
-        file_number+=1 # Считаем, номер файла, если вдруг он повреждён
         stata = events(stata, file_format, file_name, file_number, skip_invalid_flag)
 
     return stata.stat()
