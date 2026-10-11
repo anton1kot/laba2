@@ -10,7 +10,7 @@ from .models import csv_event, jsonl_event
 
 def file_pars(file_format,files_name, skip_invalid_flag):
     stata = Stats()
-    for file_number, file_name in enumerate(files_name):
+    for file_number, file_name in enumerate(files_name, start=1):
         stata = events(stata, file_format, file_name, file_number, skip_invalid_flag)
 
     return stata.stat()
@@ -21,7 +21,7 @@ def events(stata, file_format,file_name, file_number, skip_invalid_flag):
     try:
         if file_format == 'jsonl':
             with open(file_name, 'r', encoding='utf-8') as jsonl_file:
-                for line_number, line in enumerate(jsonl_file) :
+                for line_number, line in enumerate(jsonl_file,start=1) :
                     if line == '\n': continue
 
                     try:
