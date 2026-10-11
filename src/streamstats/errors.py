@@ -1,12 +1,16 @@
-"""
-неверное событие;
-ошибка конфигурации CLI.
-"""
+
 class StreamStatsError(Exception):
-    """Базовый класс ошибок пакета streamstats."""
+    #Базовый класс ошибок пакета streamstats.
+    pass
+
+class EmptyFileError(StreamStatsError):
     pass
 
 class EventError(StreamStatsError):
+    pass
+
+class EmptySourceError(EventError):
+    # Пустой источник, разновидность ошибки события
     pass
 
 class FormatError(StreamStatsError):
@@ -15,5 +19,6 @@ class FormatError(StreamStatsError):
 class TimeStampError(StreamStatsError):
     pass
 
-class CliConfigError(StreamStatsError):
+class CLIConfigError(StreamStatsError):
+    # Ошибка конфигурации CLI
     pass

@@ -1,11 +1,15 @@
 from datetime import datetime
 
+from streamstats.errors import TimeStampError
+
+
 class Stats:
 
     def __init__(self,stata=None) -> None:
+        self.top_bad_source = {}
         if not stata:
-            self.first_point = datetime.fromisoformat("3000-01-01T01:00:00Z")
-            self.last_point = datetime.fromisoformat("0001-01-01T00:00:00Z")
+            self.first_point = None#datetime.fromisoformat("3000-01-01T01:00:00Z")
+            self.last_point = None#datetime.fromisoformat("0001-01-01T00:00:00Z")
             self.level_count = {
                 "INFO": 0,
                 "DEBUG": 0,
@@ -31,9 +35,15 @@ class Stats:
     def analys(self,event=None):
         if event == None:
             return 0
-
-        self.first_point = min(self.first_point, datetime.fromisoformat(event.timestamp))  #event.timestamp)
-        self.last_point = max(self.last_point, datetime.fromisoformat(event.timestamp)) #event.timestamp)
+        try:
+            if self.first_point:
+                self.first_point = min(self.first_point, datetime.fromisoformat(event.timestamp))
+                self.last_point = max(self.last_point, datetime.fromisoformat(event.timestamp))
+            else:
+                self.first_point = datetime.fromisoformat(event.timestamp)
+                self.last_point = datetime.fromisoformat(event.timestamp)
+        except ValueError as er:
+            raise TimeStampError(er)
         self.level_count[event.level] += 1
         if event.source in self.source_count:
             self.source_count[event.source] += 1
@@ -46,19 +56,15 @@ class Stats:
                 self.bad_source_count[event.source] = 1
 
         self.count = sum(self.source_count.values())
-        sorted_bad_source = dict(sorted(self.bad_source_count.items(), key=lambda x: x, reverse=True))
-        first_five_source=list(sorted_bad_source)[:5]
-        self.top_bad_source = {}
-        for i in first_five_source:
-            self.top_bad_source[i] = sorted_bad_source[i]
 
     def stat(self):
+        self.top_bad_source = dict(sorted(self.bad_source_count.items(), key=lambda x: x[1], reverse=True)[:5])
         return {
             "total_events": self.count,
             "by_level": self.level_count,
             "by_source": self.source_count,
             "top_5_error_sources": self.top_bad_source,
-            "first_timestamp": self.first_point.isoformat(),
-            "last_timestamp": self.last_point.isoformat(),
+            "first_timestamp": self.first_point.isoformat() if self.first_point else None,
+            "last_timestamp": self.last_point.isoformat() if self.first_point else None,
             "skipped_lines": self.skipped_lines
         }

@@ -1,6 +1,4 @@
-from operator import and_
-
-from streamstats.errors import EventError
+from streamstats.errors import EventError, EmptySourceError
 
 
 class Event:
@@ -12,6 +10,8 @@ class Event:
         self.message = message
         self.file_number = file_number
         self.line_number = line_number
+        if not source or source.replace(' ','') == '':
+            raise EmptySourceError()
 
 def valid_keys(file):
     if len(file) != 4: return False

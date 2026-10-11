@@ -1,25 +1,11 @@
 '''
-
-jsonl
-../../../f2.jsonl
-
 Задачи:
-    - объединить файлы в начале parsers.py
-    - счётчик плохих линий
-    - обработка ошибок (через класс)
-CLI:
-    - ввод
-    - хелп
-    - вывод ошибок (из класса)
-    -
-
-
+    --help
 '''
 import json
 import sys
-from logging import raiseExceptions
 
-from streamstats.errors import StreamStatsError, EventError, TimeStampError, FormatError
+from streamstats.errors import StreamStatsError, EventError, TimeStampError, FormatError, EmptyFileError, CLIConfigError
 from .report import json_write
 from .parsers import file_pars
 
@@ -46,7 +32,12 @@ def main():
             if argue == '--output':
                 args.condition = 'output'
                 continue
-            if argue == '--skip-invalid': args.skip_invalid_flag = True
+            if argue == '--skip-invalid':
+                args.skip_invalid_flag = True
+                continue
+            if argue[0]=='-' and not '.' in argue:
+                raise CLIConfigError(f'unknown flag <{argue}>')
+
             if args.condition == 'names':
                 args.files.append(argue)
             if args.condition == 'format':
@@ -55,23 +46,63 @@ def main():
             if args.condition == 'output':
                 args.output_file = argue
                 args.condition = None
+        try:
+            stata = file_pars(args.format, args.files, args.skip_invalid_flag)
+        except EmptyFileError as er:
+            sys.stderr.write(f'EmptyFileError: {er}')
+            sys.exit(2)
+        except EventError as er:
+            sys.stderr.write(f'EventError: {er}')
+            sys.exit(2)
+        except TimeStampError as er:
+            sys.stderr.write(f'TimeStampError: {er}')
+            sys.exit(2)
+        except FormatError as er:
+            sys.stderr.write(f'FormatError: {er}')
+            sys.exit(2)
+        #if stata.count == 0:
+        if not args.files:
+            raise EmptyFileError('Please, input: "... analyze <file_name> --format ..."')
+        if args.format is None:
+            raise FormatError(f'Please indicate format: "... --format csv|jsonl"')
+        if args.output_file:
+            json_write(stata, args.output_file)
+        else:
+            sys.stdout.write(json.dumps(stata, ensure_ascii=False, indent=2))#.replace('{','').replace('}',' ').replace(',',' ').replace('"',''))
+    elif args.mode == "--help":
+        sys.stdout.write("""
+Usage:
+    python -m streamstats analyze FILE1 FILE2 ... --format csv|jsonl 
+        Принимает .jsonl и .csv файлы событий соответсвующие формату:
+            timestamp: ISO 8601
+            level: DEBUG | INFO | WARNING | ERROR | CRITICAL
+            source: непустая строка
+            message: строка
+        Опции:
+            --output FILE.json
+                - Вывод статистику в JSON файл
+            --skip-invalid
+                - Пропуск невалидных строк, вывод WARNING в stderr,
+                    подсчёт пропущенных строк в общей статистике
+            
+    Ошибки:
+        EventError: Ввод файла, несоответствующего маске;
+        EmptyFileError: Пустой файл или не введено ни одного файла;
+        TimeStampError: Неверный формат временных меток;
+        FormatError: Отсутсвие --format csv|jsonl либо указание иного формата
+        CLIConfigError: 
+        """)
+    else:
+        raise CLIConfigError("To see more information: \n\n\t\t\tpython -m streamstats --help\n\n")
+if __name__ == "__main__":
     try:
-        stata = file_pars(args.format, args.files, args.skip_invalid_flag)
-    except EventError as er:
-        sys.stderr.write(f'EventError: {er}')
-        sys.exit(2)
-#    except TimeStampError as er:
-        sys.stderr.write(f'TimeStampError: {er}')
-        sys.exit(2)
+        main()
     except FormatError as er:
         sys.stderr.write(f'FormatError: {er}')
         sys.exit(2)
-    if args.output_file:
-        json_write(stata)
-    else:
-        sys.stdout.write(json.dumps(stata, ensure_ascii=False, indent=2).replace('{','').replace('}',' ').replace(',',' ').replace('"',''))
-
-
-if __name__ == "__main__":
-
-    main()
+    except EmptyFileError as er:
+        sys.stderr.write(f'EmptyFileError: {er}')
+        sys.exit(2)
+    except CLIConfigError as er:
+        sys.stderr.write(f'CLIConfigError: {er}')
+        sys.exit(2)
