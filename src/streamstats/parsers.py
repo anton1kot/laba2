@@ -26,7 +26,7 @@ def events(stata, file_format,file_name, file_number, skip_invalid_flag):
                     line_number += 1
                     try:
                         stata.analys(jsonl_event(file_number, line_number,json.loads(line.strip())))
-                    except ValueError as er:
+                    except TimeStampError as er:
                         if skip_invalid_flag:
                             stata.skipped_lines += 1
                             sys.stderr.write(f'WARNING: line #{line_number}, file #{file_number}\n')
@@ -61,8 +61,6 @@ def events(stata, file_format,file_name, file_number, skip_invalid_flag):
                         else:
                             raise EventError(f'"{type(er).__name__}" in file {file_number}, line {line_number}')
         else: raise FormatError(f'<{file_format}> is unsupported format, only <csv> or <jsonl>')
-        #if line_number == 0:
-            #raise EmptyFileError(f'Empty {file_format} file {file_number}')
     except FileNotFoundError as er:
         raise CLIConfigError(f'{type(er).__name__} in file {file_number}')
 

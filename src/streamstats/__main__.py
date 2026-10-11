@@ -1,22 +1,18 @@
-'''
-Задачи:
-    --help
-'''
 import json
 import sys
 
-from streamstats.errors import StreamStatsError, EventError, TimeStampError, FormatError, EmptyFileError, CLIConfigError
+from streamstats.errors import EventError, TimeStampError, FormatError, EmptyFileError, CLIConfigError
 from .report import json_write
 from .parsers import file_pars
 
 class Arguments:
     def __init__(self,argvs):
         if len(argvs)>=1:
-            self.mode = argvs[0]
-            self.args = argvs[1:]
+            self.mode = argvs[0] # Анализируем или выводим --help
+            self.args = argvs[1:] #Принимаем аргументы
         else:
             self.mode = "err"
-        self.condition = 'names'
+        self.condition = 'names' # Начальное состояние обработки аргумента - имена файлов
         self.files = []
         self.format = None
         self.output_file = None
@@ -27,7 +23,7 @@ def main():
     if args.mode == 'analyze':
         for argue in args.args:
             if argue == '--format':
-                args.condition = 'format'
+                args.condition = 'format' # Состояние формат ждёт формат
                 continue
             if argue == '--output':
                 args.condition = 'output'
@@ -35,7 +31,7 @@ def main():
             if argue == '--skip-invalid':
                 args.skip_invalid_flag = True
                 continue
-            if argue[0]=='-' and not '.' in argue:
+            if argue[0]=='-' and not '.' in argue: # Если ошибка в имени флага, но не начало файла
                 raise CLIConfigError(f'unknown flag <{argue}>')
 
             if args.condition == 'names':
@@ -60,7 +56,6 @@ def main():
         except FormatError as er:
             sys.stderr.write(f'FormatError: {er}')
             sys.exit(2)
-        #if stata.count == 0:
         if not args.files:
             raise EmptyFileError('Please, input: "... analyze <file_name> --format ..."')
         if args.format is None:
@@ -87,10 +82,10 @@ Usage:
             
     Ошибки:
         EventError: Ввод файла, несоответствующего маске;
-        EmptyFileError: Пустой файл или не введено ни одного файла;
+        EmptyFileError: Не введено ни одного файла;
         TimeStampError: Неверный формат временных меток;
         FormatError: Отсутсвие --format csv|jsonl либо указание иного формата
-        CLIConfigError: 
+        CLIConfigError: Ошибки конфигурации CLI
         """)
     else:
         raise CLIConfigError("To see more information: \n\n\t\t\tpython -m streamstats --help\n\n")

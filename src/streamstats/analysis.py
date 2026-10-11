@@ -7,9 +7,9 @@ class Stats:
 
     def __init__(self,stata=None) -> None:
         self.top_bad_source = {}
-        if not stata:
-            self.first_point = None#datetime.fromisoformat("3000-01-01T01:00:00Z")
-            self.last_point = None#datetime.fromisoformat("0001-01-01T00:00:00Z")
+        if not stata: # Смотрим: создаём или обновляем статистику
+            self.first_point = None
+            self.last_point = None
             self.level_count = {
                 "INFO": 0,
                 "DEBUG": 0,
@@ -36,7 +36,7 @@ class Stats:
         if event == None:
             return 0
         try:
-            if self.first_point:
+            if self.first_point: # Если есть с чем сравнить
                 self.first_point = min(self.first_point, datetime.fromisoformat(event.timestamp))
                 self.last_point = max(self.last_point, datetime.fromisoformat(event.timestamp))
             else:
@@ -44,11 +44,11 @@ class Stats:
                 self.last_point = datetime.fromisoformat(event.timestamp)
         except ValueError as er:
             raise TimeStampError(er)
-        self.level_count[event.level] += 1
+        self.level_count[event.level] += 1 # Считаем в формате LEVEL: count
         if event.source in self.source_count:
             self.source_count[event.source] += 1
         else:
-            self.source_count[event.source] = 1
+            self.source_count[event.source] = 1 # Создаём новый ключ источника
         if event.level in ('ERROR', 'CRITICAL'):
             if event.source in self.bad_source_count:
                 self.bad_source_count[event.source] += 1
@@ -58,6 +58,7 @@ class Stats:
         self.count = sum(self.source_count.values())
 
     def stat(self):
+        # Сортируем по элементам, срезаем первые пять, возвращаем словарем
         self.top_bad_source = dict(sorted(self.bad_source_count.items(), key=lambda x: x[1], reverse=True)[:5])
         return {
             "total_events": self.count,
